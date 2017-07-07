@@ -1,0 +1,17 @@
+---
+title: "Leaflet Practice - Coursera Developing Data Product Practice"
+author: "Armen Abnousi"
+date: "July 7, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Leaflet map
+Here I will include a leaflet map:
+```{r}
+library(leaflet)
+leaflet() %>% addTiles() 
+```
