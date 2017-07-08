@@ -1,17 +1,34 @@
 ---
-title: "Leaflet Practice - Coursera Developing Data Product Practice"
+title: "Leaflet Practice - US Postsecondary Institutions"
 author: "Armen Abnousi"
 date: "July 7, 2017"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
+setwd("~/coursera/coursera_developing_data_products/week2_pa/")
 knitr::opts_chunk$set(echo = TRUE)
 ```
+I have acquired college accreditation data from [here](https://ope.ed.gov/accreditation/dataFiles/Accreditation_2017_04.zip) and the US zipcode dataset from [here](https://boutell.com/zipcodes/zipcode.zip).
+```{r, eval = TRUE, echo = FALSE, cache = TRUE}
+download.file("https://ope.ed.gov/accreditation/dataFiles/Accreditation_2017_04.zip", destfile = "college_locations", method = "curl")
+#download.file("https://ope.ed.gov/campussafety/api/dataFiles/file?fileName=Crime2016EXCEL.zip", destfile = "campus_safety", method = "curl")
+download.file("https://boutell.com/zipcodes/zipcode.zip", destfile = "zip_to_latlang")
+```
+```{r, eval = TRUE, echo = FALSE}
+cities <- read.csv(unzip(zipfile = "zip_to_latlang", files = "zipcode.csv"))
+unis <- read.csv(unzip(zipfile = "college_locations", files = c("Accreditation_04_2017.csv")))
+unis <- dplyr::select_(unis, "Institution_Name", "Institution_City", "Institution_State", "Institution_Zip")
+unis$Institution_Zip <- sapply(as.character(unis$Institution_Zip), function(c){z <- unlist(strsplit(c, "-")); z[1]}, simplify = TRUE)
+unis <- unique(unis)
+unis$Institution_Zip <- as.integer(unis$Institution_Zip)
+merged <- merge(unis, cities, by.x = c("Institution_Zip", "Institution_State", "Institution_City"), by.y = c("zip", "state", "city"))
+colnames(merged)[colnames(merged) == "longitude"] <- "lng"
+colnames(merged)[colnames(merged) == "latitude"] <- "lat"
+```
+There were initially `r dim(unis)[1]` accredited institutions in the dataset, by merging the data to find the institutions' latitude, longitude data, I could retrieve only `r dim(merged)[1]` of them. The map generated below shows these institutions and their locations. I do intend to add more options to this map later when I find the time! 
 
-## Leaflet map
-Here I will include a leaflet map:
-```{r}
+```{r, message = FALSE}
 library(leaflet)
-leaflet() %>% addTiles() 
+merged %>% leaflet() %>% addTiles() %>% addCircleMarkers(popup = merged$Institution_Name, clusterOptions = markerClusterOptions(), weight = 1) 
 ```
